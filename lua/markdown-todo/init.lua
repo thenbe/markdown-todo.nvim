@@ -110,11 +110,14 @@ local ns_id = vim.api.nvim_create_namespace("markdown-todo")
 --- Sets a virtual icon for a todo indicator, replacing the existing one if any.
 ---@param indicator_index number
 ---@param itemType TodoItemType
-local set_virtual_icon = function(indicator_index, itemType)
-	local line_num = vim.fn.line(".")
+---@param line_num number
+local set_virtual_icon = function(indicator_index, itemType, line_num)
 	-- clear existing extmarks
-	vim.api.nvim_buf_clear_namespace(0, ns_id, line_num, line_num + 1)
-	vim.api.nvim_buf_set_extmark(0, ns_id, line_num - 1, indicator_index, {
+	local extmarks = vim.api.nvim_buf_get_extmarks(0, ns_id, { line_num, 0 }, { line_num + 1, 0 }, {})
+	for _, extmark in ipairs(extmarks) do
+		vim.api.nvim_buf_del_extmark(0, ns_id, extmark[1])
+	end
+	vim.api.nvim_buf_set_extmark(0, ns_id, line_num, indicator_index, {
 		-- virt_text = { { indicators[itemType].icon, indicators[itemType].hl } },
 		virt_text = { { indicators[itemType].icon } },
 		hl_mode = "combine",
@@ -140,6 +143,23 @@ local function set_hl()
 	for _, indicator in pairs(indicators) do
 		-- use \V for very nomagic (literal) matching
 		vim.fn.matchadd(indicator.hl, "(\\V" .. indicator.literal .. ")")
+	end
+end
+
+--- Scans the entire buffer for todo indicators and sets virtual icons for them.
+local function set_virtual_icons()
+	local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+	for i, line in ipairs(lines) do
+		local indicator_index = has_todo_indicator(line)
+		if indicator_index then
+			local indicator_char = line:sub(indicator_index + 1, indicator_index + 1)
+			for itemType, indicator in pairs(indicators) do
+				if indicator.literal == indicator_char then
+					set_virtual_icon(indicator_index, itemType, i - 1)
+					break
+				end
+			end
+		end
 	end
 end
 
@@ -172,7 +192,8 @@ function M.make_todo(itemType)
 			vim.api.nvim_err_writeln("Failed to add todo indicator")
 			return false
 		end
-		set_virtual_icon(indicator_index, itemType)
+		local line_num = vim.fn.line(".") - 1
+		set_virtual_icon(indicator_index, itemType, line_num)
 		return true
 	else
 		return false
@@ -192,6 +213,16 @@ function M.setup()
 		group = augroup("bind_keys"),
 		pattern = { "*.md" },
 		callback = bind_keys,
+	})
+
+	-- set virtual icons for existing todo indicators
+	vim.api.nvim_create_autocmd({
+		"BufWinEnter",
+		-- "WinEnter",
+	}, {
+		group = augroup("set_virtual_icons"),
+		pattern = { "*.md" },
+		callback = set_virtual_icons,
 	})
 end
 
