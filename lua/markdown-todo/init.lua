@@ -120,7 +120,8 @@ local function should_hide_icons()
 	local cursor_pos = vim.api.nvim_win_get_cursor(0)
 	local line = vim.api.nvim_get_current_line()
 	local indicator_start, indicator_end = has_todo_indicator(line)
-	if indicator_start and (cursor_pos[2] >= indicator_start) and (cursor_pos[2] <= indicator_end) then
+	-- hide virtual icons whenever insert mode is entered before or on the todo indicator
+	if cursor_pos[2] <= indicator_end then
 		local line_num = vim.fn.line(".") - 1
 		return line_num
 	else
