@@ -1,0 +1,9 @@
+---@alias TodoItemType
+---|"undone"
+---|"pending"
+---|"done"
+---|"cancelled"
+---|"recurring"
+---|"on_hold"
+---|"urgent"
+---|"uncertain"
