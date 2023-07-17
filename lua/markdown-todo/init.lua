@@ -117,16 +117,8 @@ local ns_id = vim.api.nvim_create_namespace("markdown-todo")
 --- Return line number (0 based) being edited.
 ---@return number|false
 local function should_hide_icons()
-	local cursor_pos = vim.api.nvim_win_get_cursor(0)
-	local line = vim.api.nvim_get_current_line()
-	local indicator_start, indicator_end = has_todo_indicator(line)
-	-- hide virtual icons whenever insert mode is entered before or on the todo indicator
-	if cursor_pos[2] <= indicator_end then
-		local line_num = vim.fn.line(".") - 1
-		return line_num
-	else
-		return false
-	end
+	local line_num = vim.fn.line(".") - 1
+	return line_num
 end
 
 --- Clear existing extmarks
