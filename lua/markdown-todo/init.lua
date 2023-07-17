@@ -128,16 +128,23 @@ local function should_hide_icons()
 	end
 end
 
+--- Clear existing extmarks
+---@param line_num number
+local function hide_virtual_icons(line_num)
+	local extmarks = vim.api.nvim_buf_get_extmarks(0, ns_id, { line_num, 0 }, { line_num + 1, 0 }, {})
+	for _, extmark in ipairs(extmarks) do
+		vim.api.nvim_buf_del_extmark(0, ns_id, extmark[1])
+	end
+end
+
 --- Sets a virtual icon for a todo indicator, replacing the existing one if any.
 ---@param indicator_index number
 ---@param itemType TodoItemType
 ---@param line_num number
 local set_virtual_icon = function(indicator_index, itemType, line_num)
-	-- clear existing extmarks
-	local extmarks = vim.api.nvim_buf_get_extmarks(0, ns_id, { line_num, 0 }, { line_num + 1, 0 }, {})
-	for _, extmark in ipairs(extmarks) do
-		vim.api.nvim_buf_del_extmark(0, ns_id, extmark[1])
-	end
+	-- before setting new icons, clear existing ones
+	hide_virtual_icons(line_num)
+	-- sometimes we want to keep the virtual icons hidden
 	if should_hide_icons() then
 		return
 	end
@@ -251,6 +258,7 @@ function M.setup()
 		pattern = { "*.md" },
 		callback = set_virtual_icons,
 	})
+
 end
 
 return M
