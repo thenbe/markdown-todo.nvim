@@ -73,12 +73,12 @@ local function is_lead_char(line)
 end
 
 --- Checks if a line already contains a todo indicator.
---- Returns the index of the todo indicator if found, or nil otherwise.
+--- Returns the start and end indices of the todo indicator if found, or nil otherwise.
 ---@param line string
----@return number|nil
+---@return number|nil, number|nil
 local function has_todo_indicator(line)
-	-- TODO: grab literals from indicators table
-	return line:find("%(%s?[%s%-_=xy!+?o]%s?%)")
+	local start, finish = line:find("%(%s?[%s%-_=xy!+?o]%s?%)")
+	return start, finish
 end
 
 --- Adds a new todo indicator to a line.
@@ -113,6 +113,21 @@ end
 
 local ns_id = vim.api.nvim_create_namespace("markdown-todo")
 
+--- Hide virtual text if todo indicator is being edited
+local function should_hide_icons()
+	-- only hide icons in insert mode
+	if vim.api.nvim_get_mode().mode ~= "i" then
+		return false
+	end
+
+	local cursor_pos = vim.api.nvim_win_get_cursor(0)
+	local line = vim.api.nvim_get_current_line()
+	local indicator_start, indicator_end = has_todo_indicator(line)
+	if indicator_start and (cursor_pos[2] >= indicator_start) and (cursor_pos[2] <= indicator_end) then
+		return true
+	end
+end
+
 --- Sets a virtual icon for a todo indicator, replacing the existing one if any.
 ---@param indicator_index number
 ---@param itemType TodoItemType
@@ -122,6 +137,9 @@ local set_virtual_icon = function(indicator_index, itemType, line_num)
 	local extmarks = vim.api.nvim_buf_get_extmarks(0, ns_id, { line_num, 0 }, { line_num + 1, 0 }, {})
 	for _, extmark in ipairs(extmarks) do
 		vim.api.nvim_buf_del_extmark(0, ns_id, extmark[1])
+	end
+	if should_hide_icons() then
+		return
 	end
 	vim.api.nvim_buf_set_extmark(0, ns_id, line_num, indicator_index, {
 		-- virt_text = { { indicators[itemType].icon, indicators[itemType].hl } },
