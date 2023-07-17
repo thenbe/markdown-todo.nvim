@@ -226,6 +226,8 @@ function M.setup()
 	vim.api.nvim_create_autocmd({
 		"BufWinEnter",
 		-- "WinEnter",
+		"TextChanged",
+		"TextChangedI",
 	}, {
 		group = augroup("set_virtual_icons"),
 		pattern = { "*.md" },
