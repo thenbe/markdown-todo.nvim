@@ -73,12 +73,12 @@ local function is_lead_char(line)
 end
 
 --- Checks if a line already contains a todo indicator.
---- Returns the index of the todo indicator if found, or nil otherwise.
+--- Returns the start and end indices of the todo indicator if found, or nil otherwise.
 ---@param line string
----@return number|nil
+---@return number|nil, number|nil
 local function has_todo_indicator(line)
-	-- TODO: grab literals from indicators table
-	return line:find("%(%s?[%s%-_=xy!+?o]%s?%)")
+	local start, finish = line:find("%(%s?[%s%-_=xy!+?o]%s?%)")
+	return start, finish
 end
 
 --- Adds a new todo indicator to a line.
@@ -113,16 +113,30 @@ end
 
 local ns_id = vim.api.nvim_create_namespace("markdown-todo")
 
+--- Hide virtual text if todo indicator is being edited.
+--- Return line number (0 based) being edited.
+---@return number|false
+local function should_hide_icons()
+	local line_num = vim.fn.line(".") - 1
+	return line_num
+end
+
+--- Clear existing extmarks
+---@param line_num number
+local function hide_virtual_icons(line_num)
+	local extmarks = vim.api.nvim_buf_get_extmarks(0, ns_id, { line_num, 0 }, { line_num + 1, 0 }, {})
+	for _, extmark in ipairs(extmarks) do
+		vim.api.nvim_buf_del_extmark(0, ns_id, extmark[1])
+	end
+end
+
 --- Sets a virtual icon for a todo indicator, replacing the existing one if any.
 ---@param indicator_index number
 ---@param itemType TodoItemType
 ---@param line_num number
 local set_virtual_icon = function(indicator_index, itemType, line_num)
-	-- clear existing extmarks
-	local extmarks = vim.api.nvim_buf_get_extmarks(0, ns_id, { line_num, 0 }, { line_num + 1, 0 }, {})
-	for _, extmark in ipairs(extmarks) do
-		vim.api.nvim_buf_del_extmark(0, ns_id, extmark[1])
-	end
+	-- before setting new icons, clear existing ones
+	hide_virtual_icons(line_num)
 	vim.api.nvim_buf_set_extmark(0, ns_id, line_num, indicator_index, {
 		-- virt_text = { { indicators[itemType].icon, indicators[itemType].hl } },
 		virt_text = { { indicators[itemType].icon } },
@@ -222,11 +236,22 @@ function M.setup()
 		callback = bind_keys,
 	})
 
-	-- set virtual icons for existing todo indicators
+	-- hide virtual icons when (1) entering insert mode (2) near a todo indicator.
 	vim.api.nvim_create_autocmd({
-		"BufWinEnter",
-		-- "WinEnter",
+		"InsertEnter",
 	}, {
+		group = augroup("hide_virtual_icons"),
+		pattern = { "*.md" },
+		callback = function()
+			local line = should_hide_icons()
+			if line then
+				hide_virtual_icons(line)
+			end
+		end,
+	})
+
+	-- always show virtual icons when leaving insert mode
+	vim.api.nvim_create_autocmd("InsertLeave", {
 		group = augroup("set_virtual_icons"),
 		pattern = { "*.md" },
 		callback = set_virtual_icons,
