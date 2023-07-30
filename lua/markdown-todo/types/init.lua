@@ -5,6 +5,11 @@
 ---|"cancelled"
 ---|"recurring"
 ---|"on_hold"
----|"urgent"
----|"uncertain"
+---|"important"
+---|"ambiguous"
 ---|"ongoing"
+
+---@class TodoItemDefinition
+---@field literal string
+---@field icon string
+---@field hl string

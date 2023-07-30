@@ -8,6 +8,7 @@ local lead_chars = {
 	"-", -- bullet
 }
 
+---@type table<TodoItemType, TodoItemDefinition>
 local indicators = {
 	undone = {
 		literal = " ",
