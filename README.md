@@ -20,6 +20,7 @@ A simple implementation of [neorg](https://github.com/nvim-neorg/neorg)'s [todo_
 - `<leader>ti`: Mark as Important
 - `<leader>tr`: Mark as Recurring
 - `<leader>ta`: Mark as Ambiguous
+- `<leader>to`: Mark as Ongoing
 
 ## Install
 

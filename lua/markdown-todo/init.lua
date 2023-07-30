@@ -49,6 +49,11 @@ local indicators = {
 		hl = "Boolean",
 		icon = "",
 	},
+	ongoing = {
+		literal = "o",
+		hl = "@keyword",
+		icon = "",
+	},
 }
 
 -- Helper functions
@@ -72,7 +77,8 @@ end
 ---@param line string
 ---@return number|nil
 local function has_todo_indicator(line)
-	return line:find("%(%s?[%s%-_=xy!+?]%s?%)")
+	-- TODO: grab literals from indicators table
+	return line:find("%(%s?[%s%-_=xy!+?o]%s?%)")
 end
 
 --- Adds a new todo indicator to a line.
@@ -136,6 +142,7 @@ local function bind_keys()
 	vim.keymap.set("n", "<leader>ti", function() require("markdown-todo").make_todo("important") end, { buffer = 0, desc = "Mark as Important" })
 	vim.keymap.set("n", "<leader>tr", function() require("markdown-todo").make_todo("recurring") end, { buffer = 0, desc = "Mark as Recurring" })
 	vim.keymap.set("n", "<leader>ta", function() require("markdown-todo").make_todo("ambiguous") end, { buffer = 0, desc = "Mark as Ambiguous" })
+	vim.keymap.set("n", "<leader>to", function() require("markdown-todo").make_todo("ongoing") end, { buffer = 0, desc = "Mark as Ongoing" })
 	-- stylua: ignore end
 end
 
