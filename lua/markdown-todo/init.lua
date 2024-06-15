@@ -37,7 +37,7 @@ local indicators = {
 	},
 	important = {
 		literal = "!",
-		hl = "@text.danger",
+		hl = "NvimInvalid",
 		icon = "⚠",
 	},
 	recurring = {
